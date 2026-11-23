@@ -1,0 +1,14 @@
+{
+  "name": "kuesioner-rri",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview --open"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}

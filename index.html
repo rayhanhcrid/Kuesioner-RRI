@@ -173,12 +173,51 @@ table.t tr.tot td{font-weight:800;background:var(--navy-soft)}
   .q.check .yn{grid-column:1/3;justify-content:flex-start}
 }
 
+/* Status kirim */
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;vertical-align:1px}
+.badge.ok{background:var(--green-soft);color:var(--green)}
+.badge.no{background:#eef0f5;color:var(--muted)}
+.badge.chg{background:var(--gold-soft);color:#8a6510}
+.btn:disabled{opacity:.6;cursor:wait}
+
+/* Dashboard */
+#dash{display:none;min-height:100vh}
+body.dash-on .screen{display:none}
+body.dash-on #dash{display:block}
+.dwrap{max-width:1280px;margin:0 auto;padding:22px 20px 80px}
+.stats{display:flex;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;min-width:220px}
+.stat small{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700}
+.stat b{display:block;font-size:28px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1.2;margin-top:4px}
+.dtools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.dtools input{flex:1;min-width:200px;border:1px solid #cfd3e0;border-radius:8px;padding:9px 11px;background:#fff;font-size:14.5px}
+.dnote{color:var(--muted);font-size:13px;margin:10px 2px}
+.tscroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+table.dt{width:100%;border-collapse:collapse;font-size:14px;min-width:900px}
+table.dt th,table.dt td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+table.dt th{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;background:#fafbfd;white-space:nowrap}
+table.dt tbody tr:last-child td{border-bottom:0}
+table.dt tbody tr{cursor:pointer}
+table.dt tbody tr:hover{background:var(--navy-soft)}
+table.dt td.act{white-space:nowrap;text-align:right}
+table.dt td.act .btn+.btn{margin-left:6px}
+.open{all:unset;cursor:pointer;font-weight:700;color:var(--navy)}
+.open:hover{text-decoration:underline}
+.open:focus-visible{outline:3px solid #8fa0ff;outline-offset:2px;border-radius:2px}
+table.dt td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+table.dt td small{display:block;color:var(--muted);font-size:12.5px}
+table.dt td .tag{margin-left:4px}
+.login{max-width:380px}
+.login input{width:100%;border:1px solid #cfd3e0;border-radius:8px;padding:10px 12px;font-size:15px;margin:14px 0 4px}
+.err{color:var(--r-vhigh);font-size:13px;min-height:19px}
+@media (max-width:640px){.stat{flex:1}.dwrap{padding:16px 16px 60px}.dtools .btn{flex:1;justify-content:center}}
+
 /* ============ PRINT ============ */
 #print{display:none}
 @media print{
   @page{size:A4;margin:16mm 16mm 16mm 18mm}
   body{background:#fff;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000}
-  .screen,.modal,.toast{display:none!important}
+  .screen,.modal,.toast,#dash{display:none!important}
   #print{display:block}
   .pg{page-break-after:always;break-after:page}
   .pg:last-child{page-break-after:auto;break-after:auto}
@@ -225,8 +264,8 @@ table.t tr.tot td{font-weight:800;background:var(--navy-soft)}
       <p id="hdrLoc">Lapas Kelas II B Cianjur</p>
     </div>
     <div class="actions">
+      <button class="btn ghost" id="bDash" title="Lihat semua data yang sudah dikirim (perlu password)">Dashboard</button>
       <button class="btn ghost" id="bNew" title="Mulai formulir kosong">＋ Baru</button>
-      <button class="btn ghost" id="bList">Data Tersimpan <span id="recCount"></span></button>
       <button class="btn ghost" id="bSave">Simpan</button>
       <button class="btn pri" id="bPrint">Cetak / PDF</button>
     </div>
@@ -251,9 +290,48 @@ table.t tr.tot td{font-weight:800;background:var(--navy-soft)}
       <label class="btn" style="margin:0">Impor JSON<input type="file" id="fImport" accept=".json,application/json" hidden></label>
       <button class="btn" id="bClose">Tutup</button>
     </div>
-    <p class="hint" style="margin:0 0 8px;color:var(--muted);font-size:13px">Data disimpan di browser perangkat ini. Rutin cadangkan ke JSON agar tidak hilang saat cache browser dibersihkan.</p>
+    <p class="hint" style="margin:0 0 8px;color:var(--muted);font-size:13px">Daftar ini hanya tersimpan di browser perangkat ini. Agar masuk ke Dashboard, buka langkah <b>Hasil &amp; Cetak</b> lalu tekan <b>Kirim Data</b>.</p>
     <div id="recList"></div>
   </div>
+</div>
+
+<div class="modal" id="mLogin" role="dialog" aria-modal="true" aria-labelledby="mLoginT">
+  <form class="mbox login" id="fLogin" autocomplete="off">
+    <h2 id="mLoginT" style="margin:0 0 4px;color:var(--navy);font-size:18px">Masuk Dashboard</h2>
+    <p style="margin:0;color:var(--muted);font-size:13.5px">Masukkan password untuk melihat data asesmen yang sudah dikirim.</p>
+    <input type="password" id="dPw" placeholder="Password" aria-label="Password" autocomplete="current-password">
+    <div class="err" id="dErr" role="alert"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button type="button" class="btn" id="dCancel">Batal</button>
+      <button type="submit" class="btn pri" id="dGo">Masuk</button>
+    </div>
+  </form>
+</div>
+
+<div id="dash">
+<header class="top">
+  <div class="top-in">
+    <img id="dLogo" alt="Logo Pemasyarakatan">
+    <div class="brand">
+      <h1>Dashboard Data Asesmen <span class="secret">RAHASIA</span></h1>
+      <p>Lapas Kelas II B Cianjur · data yang sudah dikirim</p>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="dReload">Muat ulang</button>
+      <button class="btn ghost" id="dExit">Keluar</button>
+    </div>
+  </div>
+</header>
+<div class="dwrap">
+  <div class="stats" id="dStats"></div>
+  <div class="dtools">
+    <input type="search" id="dSearch" placeholder="Cari nama, no. register, atau petugas…" aria-label="Cari data">
+    <button class="btn navy" id="dCsv">Unduh Rekap Excel</button>
+  </div>
+  <p class="dnote" id="dInfo"></p>
+  <div class="tscroll" id="dTable"></div>
+  <p class="dnote">Klik baris atau tombol <b>Buka</b> untuk melihat dan mengubah data di formulir; setelah diubah, tekan <b>Kirim Ulang</b> di langkah Hasil &amp; Cetak. Unduh PDF membuka dialog cetak, lalu pilih <b>Simpan sebagai PDF</b>. Rekap Excel berisi identitas, seluruh jawaban, dan skor dari data yang sedang tampil.</p>
+</div>
 </div>
 <div class="toast" id="toast"></div>
 <div id="print"></div>
@@ -395,8 +473,6 @@ function renderNav(){
    <div class="sline"><span>RRI Bagian A</span><span><b>${c.aTot}</b>/17 ${c.aDone?tag(c.aCat):""}</span></div>
    ${c.fac.map(f=>`<div class="sline"><span style="max-width:150px;line-height:1.25">${f.name.replace("Penggunaan Narkotika, Obat-Obatan Terlarang, dan Konsumsi Alkohol","Narkotika & Alkohol").replace("Sikap Anti-Sosial/Pandangan terhadap Tindak Kriminal","Sikap Anti-Sosial")}</span><span><b>${f.val}</b> ${f.done?tag(f.cat):""}</span></div>`).join("")}
    <div class="sline"><span><b>Total Kriminogenik</b></span><span><b>${c.kTot}</b> ${c.kDone?tag(c.kCat):""}</span></div>`;
-  const n = (store.get("rri_records")||[]).length;
-  $("#recCount").textContent = n?`(${n})`:"";
   $("#hdrLoc").textContent = (S.ident.lokasi||"Lapas Kelas II B Cianjur") + (S.ident.nama?" · "+S.ident.nama:"");
 }
 
@@ -517,7 +593,7 @@ function missing(){
 }
 function checkedList(arr,on){return on?arr.filter(q=>S.chk[q.id]===true).length+" dari "+arr.length+" terpenuhi":"Tidak berlaku";}
 function resultView(){
-  const c=calc(), m=missing();
+  const c=calc(), m=missing(), ss=sendState(S);
   return `<div class="phead"><small>Langkah 5</small><h2>Hasil Asesmen &amp; Cetak</h2><p>Periksa ringkasan, lalu cetak dokumen lengkap (Lembar Persetujuan, Instrumen RRI, dan Instrumen Kebutuhan Kriminogenik) atau simpan sebagai PDF.</p></div>
   ${m.length?`<div class="warn"><b>Masih ada yang belum lengkap:</b><ul>${m.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
   <div class="result">
@@ -534,15 +610,19 @@ function resultView(){
    </div>
   </div>
   <div class="card" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-   <div style="flex:1;min-width:220px"><h3>Simpan &amp; Cetak</h3><p class="hint" style="margin:0">Cetak membuka dialog printer. Pilih "Save as PDF" untuk menyimpan PDF. Bagian C dan D yang tidak berlaku tercetak dengan tanda "-".</p></div>
-   <button class="btn" data-act="save">Simpan ke Data Tersimpan</button>
-   <button class="btn pri" data-act="print">Cetak / Simpan PDF</button>
+   <div style="flex:1;min-width:220px"><h3>Kirim, Simpan &amp; Cetak</h3>
+    <p class="hint" style="margin:0 0 6px">Status kirim: <span class="badge ${ss}">${SEND_LBL[ss]}</span>${S.sentAt?` <span style="font-size:12.5px">· terakhir ${fmtTime(S.sentAt)}</span>`:""}</p>
+    <p class="hint" style="margin:0"><b>Kirim Data</b> memasukkan hasil ini ke Dashboard. Cetak membuka dialog printer, lalu pilih "Save as PDF" untuk menyimpan PDF. Bagian C dan D yang tidak berlaku tercetak dengan tanda "-".</p></div>
+   <button class="btn" data-act="save">Simpan di Perangkat</button>
+   <button class="btn" data-act="print">Cetak / Simpan PDF</button>
+   <button class="btn pri" data-act="send">${ss==="no"?"Kirim Data":"Kirim Ulang"}</button>
   </div>`;
 }
 
 /* ---------------- PRINT DOCUMENT ---------------- */
 function strike(val,opts){return opts.map(o=>S.ident.jk&&val&&o!==val?`<span class="strike">${o}</span>`:o).join(" / ");}
-function printDoc(){
+function printDoc(){$("#print").innerHTML=docHTML();}
+function docHTML(){
   const I=S.ident, c=calc(), d=fmtDate(I.tgl_asesmen), dk=fmtDate(I.tgl_kk||I.tgl_asesmen);
   const nm=esc(I.nama||"...................................");
   const ev=id=>`<div class="p-ev">Bukti/informasi pendukung: <b>${esc(S.ev[id]||"")}</b></div>`;
@@ -644,29 +724,71 @@ function printDoc(){
     <tr><td><b>TOTAL NILAI KESELURUHAN</b></td><td class="c">0 – 10</td><td class="c">11 – 22</td><td class="c">23 – 29</td><td class="c">&gt; 30</td></tr></table>
    ${sign("Petugas Asesmen","Narapidana/Klien Pemasyarakatan",dk)}
   </section>`;
-  $("#print").innerHTML = h;
+  return h;
 }
 
 /* ---------------- SAVE / RECORDS ---------------- */
 let saveT;
 function persist(){clearTimeout(saveT);saveT=setTimeout(()=>store.set("rri_draft",S),250);}
-function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),2200);}
-function saveRecord(){
+function toast(t,ms){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),ms||2200);}
+function newUid(){try{return "r"+crypto.randomUUID().replace(/-/g,"");}catch(e){return "r"+Date.now().toString(36)+Math.random().toString(36).slice(2,12);}}
+function fmtTime(v){const d=new Date(v);if(!v||isNaN(d))return "";return d.getDate()+" "+BLN[d.getMonth()].slice(0,3)+" "+d.getFullYear()+", "+String(d.getHours()).padStart(2,"0")+"."+String(d.getMinutes()).padStart(2,"0");}
+
+/* status kirim: dibandingkan dengan isi saat terakhir dikirim */
+function sig(o){const s=JSON.stringify([o.ident,o.consent,o.ans,o.chk,o.ev,o.narkoba]);let h=5381;for(let i=0;i<s.length;i++)h=(Math.imul(h,33)^s.charCodeAt(i))>>>0;return h.toString(36)+"."+s.length;}
+function sendState(o){return !o.sentAt?"no":o.sentSig===sig(o)?"ok":"chg";}
+const SEND_LBL={no:"Belum dikirim",ok:"Terkirim",chg:"Ada perubahan, belum dikirim ulang"};
+
+/* ---------------- SERVER (Supabase) ---------------- */
+const API_URL="https://tvtjzetrssaweihnunce.supabase.co/rest/v1/rpc/";
+const API_KEY="sb_publishable_tKpgl4ly377zZF1kI-dTPQ_zQDescfG";
+async function rpc(fn,body){
+  let r;
+  try{r=await fetch(API_URL+fn,{method:"POST",headers:{apikey:API_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});}
+  catch(e){throw new Error("Tidak dapat terhubung ke server. Periksa koneksi internet.");}
+  const j=await r.json().catch(()=>null);
+  if(!r.ok){const e=new Error((j&&j.message)||("Server bermasalah ("+r.status+")"));e.status=r.status;throw e;}
+  return j;
+}
+let sending=false;
+async function submitRecord(btn){
+  if(sending)return;
+  if(missing().length){toast("Data belum lengkap. Lengkapi dulu bagian yang ditandai sebelum mengirim.",3500);step=4;renderAll();return;}
+  if(!S.uid)S.uid=newUid();
+  const payload=JSON.parse(JSON.stringify(S));
+  delete payload.sentAt;delete payload.sentSig;delete payload.savedAt;
+  sending=true;
+  if(btn){btn.disabled=true;btn.textContent="Mengirim…";}
+  try{
+    const res=await rpc("rri_submit",{p:payload});
+    S.sentAt=(res&&res.at)||new Date().toISOString();S.sentSig=sig(S);
+    saveRecord(true);
+    toast("Terkirim ke Dashboard: "+S.ident.nama,3000);
+  }catch(e){
+    saveRecord(true);
+    toast("Gagal mengirim. "+e.message+" Data tetap tersimpan di perangkat, coba kirim lagi nanti.",5000);
+  }finally{
+    sending=false;
+    if(step===4)renderMain();
+  }
+}
+
+function saveRecord(quiet){
   if(!S.ident.nama){toast("Isi nama lengkap dulu sebelum menyimpan");step=0;renderAll();return;}
   const recs=store.get("rri_records")||[];
-  if(!S.uid)S.uid="r"+Date.now().toString(36);
+  if(!S.uid)S.uid=newUid();
   S.savedAt=new Date().toISOString();
   const i=recs.findIndex(r=>r.uid===S.uid);
   const copy=JSON.parse(JSON.stringify(S));
   if(i>=0)recs[i]=copy;else recs.unshift(copy);
   store.set("rri_records",recs);persist();renderNav();
-  toast("Tersimpan: "+S.ident.nama);
+  if(!quiet)toast("Tersimpan di perangkat: "+S.ident.nama);
 }
 function renderList(){
   const recs=store.get("rri_records")||[];
   $("#recList").innerHTML = recs.length? recs.map((r,i)=>{
-    const keep=S; S=r; const c=calc(); S=keep;
-    return `<div class="rec"><div class="meta"><b>${esc(r.ident.nama)}</b><span>${esc(r.ident.noreg||"-")} · Asesmen ${fmtDate(r.ident.tgl_asesmen)||"-"} · RRI ${c.aTot}${c.aDone?" ("+c.aCat+")":""} · Kriminogenik ${c.kTot}${c.kDone?" ("+c.kCat+")":""}</span></div>
+    const keep=S; S=r; const c=calc(); S=keep; const ss=sendState(r);
+    return `<div class="rec"><div class="meta"><b>${esc(r.ident.nama)} <span class="badge ${ss}">${ss==="chg"?"Berubah, belum dikirim ulang":SEND_LBL[ss]}</span></b><span>${esc(r.ident.noreg||"-")} · Asesmen ${fmtDate(r.ident.tgl_asesmen)||"-"} · RRI ${c.aTot}${c.aDone?" ("+c.aCat+")":""} · Kriminogenik ${c.kTot}${c.kDone?" ("+c.kCat+")":""}</span></div>
      <button class="btn" data-load="${i}">Buka</button><button class="btn danger" data-del="${i}">Hapus</button></div>`;}).join("")
    : `<div class="empty">Belum ada data tersimpan. Gunakan tombol "Simpan" di bagian atas.</div>`;
 }
@@ -676,18 +798,128 @@ function download(name,text,type){
 function csv(){
   const recs=store.get("rri_records")||[];
   if(!recs.length){toast("Belum ada data untuk diekspor");return;}
+  csvOf(recs,"rekap_asesmen_rri_"+today()+".csv",false);
+}
+function csvOf(recs,name,withSent){
   const head=["Nama","No Register","Tanggal Lahir","Jenis Kelamin","Status","Tindak Pidana","Lama Pidana","Tujuan","Tanggal Asesmen","Petugas",
     ...RRI_A.map((q,i)=>"RRI A"+(i+1)),"RRI Total","RRI Kategori",
     ...RRI_B.map((q,i)=>"RRI B"+(i+1)),...RRI_C.map((q,i)=>"RRI C"+(i+1)),...RRI_D.map((q,i)=>"RRI D"+(i+1)),
-    ...KK_ITEMS.map(q=>"KK "+q.no),...KK.map(g=>g.f+" Nilai"),...KK.map(g=>g.f+" Kategori"),"KK Total","KK Kategori"];
+    ...KK_ITEMS.map(q=>"KK "+q.no),...KK.map(g=>g.f+" Nilai"),...KK.map(g=>g.f+" Kategori"),"KK Total","KK Kategori",...(withSent?["Terakhir Dikirim"]:[])];
   const yn=(r,id,on)=>!on?"-":r.chk[id]===true?"Ya":r.chk[id]===false?"Tidak":"";
   const rows=recs.map(r=>{const keep=S;S=r;const c=calc();const fem=isFem();S=keep;const I=r.ident;
     return [I.nama,I.noreg,fmtDate(I.tgl_lahir),I.jk,I.status,I.pasal,I.lama,I.tujuan,fmtDate(I.tgl_asesmen),I.petugas,
      ...RRI_A.map(q=>r.ans[q.id]??""),c.aTot,c.aDone?c.aCat:"",
      ...RRI_B.map(q=>yn(r,q.id,true)),...RRI_C.map(q=>yn(r,q.id,fem)),...RRI_D.map(q=>yn(r,q.id,r.narkoba)),
-     ...KK_ITEMS.map(q=>r.ans[q.id]??""),...c.fac.map(f=>f.val),...c.fac.map(f=>f.done?f.cat:""),c.kTot,c.kDone?c.kCat:""];});
-  const q=v=>{v=String(v??"");return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  download("rekap_asesmen_rri_"+today()+".csv","﻿"+[head,...rows].map(r=>r.map(q).join(";")).join("\r\n"),"text/csv;charset=utf-8");
+     ...KK_ITEMS.map(q=>r.ans[q.id]??""),...c.fac.map(f=>f.val),...c.fac.map(f=>f.done?f.cat:""),c.kTot,c.kDone?c.kCat:"",...(withSent?[fmtTime(r._upd)]:[])];});
+  /* awali teks yang mirip rumus (=,+,-,@) dengan ' agar Excel tidak menjalankannya */
+  const q=v=>{v=String(v??"");if(/^[=+\-@\t\r]/.test(v)&&!/^-?\d+([.,]\d+)?$/.test(v))v="'"+v;return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  download(name,"﻿"+[head,...rows].map(r=>r.map(q).join(";")).join("\r\n"),"text/csv;charset=utf-8");
+}
+
+/* ---------------- DASHBOARD ---------------- */
+/* Data dari server bisa berasal dari perangkat mana saja: rapikan dulu
+   (hanya field yang dikenal, skor harus angka, tanggal harus YYYY-MM-DD). */
+const ANS_IDS=[...RRI_A,...KK_ITEMS].map(q=>q.id), CHK_IDS=[...RRI_B,...RRI_C,...RRI_D].map(q=>q.id);
+function clean(row){
+  const d=row&&row.data&&typeof row.data==="object"?row.data:{};
+  const str=v=>v==null?"":String(v).slice(0,4000);
+  const obj=v=>v&&typeof v==="object"?v:{};
+  const idt=obj(d.ident), ident={};
+  Object.keys(DEF_IDENT).forEach(k=>ident[k]=str(idt[k]));
+  ["tgl_lahir","tgl_asesmen","tgl_kk"].forEach(k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(ident[k]))ident[k]="";});
+  const sa=obj(d.ans), sc=obj(d.chk), se=obj(d.ev), ans={}, chk={}, ev={};
+  ANS_IDS.forEach(id=>{const v=sa[id];if(typeof v==="number"&&isFinite(v)&&v>=0&&v<=10){ans[id]=v;if(sa[id+"_l"]!=null)ans[id+"_l"]=str(sa[id+"_l"]);}});
+  CHK_IDS.forEach(id=>{if(typeof sc[id]==="boolean")chk[id]=sc[id];});
+  [...ANS_IDS,...CHK_IDS].forEach(id=>{if(se[id]!=null)ev[id]=str(se[id]);});
+  return {uid:str(row&&row.uid),ident,consent:d.consent===true,ans,chk,ev,narkoba:d.narkoba===true,_upd:str(row&&row.updated_at)};
+}
+let DASH=null, dashPw="", dView=[];
+function scoreOf(r){const keep=S;S=r;try{return calc();}finally{S=keep;}}
+function openDash(){
+  if(DASH){showDash(true);return;}
+  $("#dErr").textContent="";$("#dPw").value="";
+  $("#mLogin").classList.add("on");setTimeout(()=>$("#dPw").focus(),30);
+}
+async function fetchDash(pw,btn){
+  const lbl=btn.textContent;btn.disabled=true;btn.textContent="Memuat…";
+  try{
+    const rows=await rpc("rri_dashboard",{pw});
+    dashPw=pw;DASH=(Array.isArray(rows)?rows:[]).map(clean).filter(r=>r.ident.nama);
+  }catch(e){
+    if(e.status===401||e.status===403)throw new Error("Password salah.");
+    throw e;
+  }finally{btn.disabled=false;btn.textContent=lbl;}
+}
+/* riwayat browser: dashboard dan formulir yang dibuka dari dashboard masing-masing
+   punya entri sendiri, supaya tombol Back (browser/HP) kembali ke layar sebelumnya */
+function setRoute(hash,push){
+  const url=location.pathname+location.search+(hash||"");
+  try{push?history.pushState({rri:hash||"form"},"",url):history.replaceState({rri:hash||"form"},"",url);}catch(e){}
+}
+function closeLogin(){
+  $("#mLogin").classList.remove("on");
+  if(location.hash==="#dashboard"&&!document.body.classList.contains("dash-on"))setRoute("",false);
+}
+function showDash(refresh){
+  $("#mLogin").classList.remove("on");$("#modal").classList.remove("on");
+  document.body.classList.add("dash-on");
+  if(location.hash!=="#dashboard")setRoute("#dashboard",true);
+  renderDash();window.scrollTo(0,0);
+  /* kembali dari formulir: ambil ulang supaya data yang baru dikirim ulang ikut tampil */
+  if(refresh&&dashPw)fetchDash(dashPw,$("#dReload")).then(renderDash).catch(err=>toast(err.message,3500));
+}
+/* buka satu data terkirim di formulir, seperti saat mengisi */
+function openFromDash(r){
+  if(S.ident.nama&&S.uid!==r.uid&&sendState(S)!=="ok"){
+    const saved=(store.get("rri_records")||[]).find(x=>x.uid===S.uid);
+    if(!(saved&&sig(saved)===sig(S))&&!confirm("Formulir yang sedang terbuka ("+S.ident.nama+") belum dikirim. Ganti dengan data "+r.ident.nama+"?"))return;
+  }
+  const data=JSON.parse(JSON.stringify(r));delete data._upd;
+  S=Object.assign(fresh(),data);
+  S.sentAt=r._upd||new Date().toISOString();S.sentSig=sig(S);
+  persist();
+  document.body.classList.remove("dash-on");
+  setRoute("",true);
+  step=0;renderAll();
+  toast("Dibuka dari Dashboard: "+S.ident.nama+". Setelah diubah, tekan Kirim Ulang di langkah Hasil & Cetak.",4500);
+}
+function exitDash(){
+  DASH=null;dashPw="";dView=[];$("#dTable").innerHTML="";$("#dSearch").value="";
+  document.body.classList.remove("dash-on");
+  setRoute("",false);
+  renderAll();
+}
+function renderDash(){
+  const all=(DASH||[]).map(r=>({r,c:scoreOf(r)}));
+  $("#dStats").innerHTML=`<div class="stat"><small>Total data terkirim</small><b>${all.length}</b></div>`;
+  const q=$("#dSearch").value.trim().toLowerCase();
+  dView=q?all.filter(({r})=>[r.ident.nama,r.ident.noreg,r.ident.petugas].join(" ").toLowerCase().includes(q)):all;
+  $("#dInfo").textContent=q?`Menampilkan ${dView.length} dari ${all.length} data untuk pencarian "${$("#dSearch").value.trim()}".`:`${all.length} data, urut dari yang terakhir dikirim.`;
+  $("#dCsv").textContent=`Unduh Rekap Excel (${dView.length})`;
+  $("#dCsv").disabled=!dView.length;
+  $("#dTable").innerHTML=dView.length?`<table class="dt"><thead><tr><th>No</th><th>Nama / No. Register</th><th>Tgl Asesmen</th><th>Petugas</th><th>Risiko RRI</th><th>Kriminogenik</th><th>Terakhir dikirim</th><th></th></tr></thead><tbody>${
+    dView.map(({r,c},i)=>`<tr data-open="${i}">
+      <td class="num">${i+1}</td>
+      <td><button class="open" data-open="${i}">${esc(r.ident.nama)}</button><small>${esc(r.ident.noreg||"-")}</small></td>
+      <td class="num">${fmtDate(r.ident.tgl_asesmen)||"-"}</td>
+      <td>${esc(r.ident.petugas||"-")}</td>
+      <td class="num"><b>${c.aTot}</b>/17${c.aDone?tag(c.aCat):""}</td>
+      <td class="num"><b>${c.kTot}</b>/39${c.kDone?tag(c.kCat):""}</td>
+      <td class="num">${fmtTime(r._upd)||"-"}</td>
+      <td class="act"><button class="btn" data-open="${i}">Buka</button><button class="btn" data-pdf="${i}">Unduh PDF</button></td></tr>`).join("")
+  }</tbody></table>`:`<div class="empty" style="padding:24px 18px">${all.length?"Tidak ada data yang cocok dengan pencarian.":"Belum ada data yang dikirim. Data muncul di sini setelah petugas menekan Kirim Data di langkah Hasil &amp; Cetak."}</div>`;
+}
+
+/* ---------------- CETAK BANYAK DATA ---------------- */
+let printLock=false;
+const baseTitle=document.title;
+function printRecords(list,title){
+  const keep=S;
+  try{$("#print").innerHTML=list.map(r=>{S=Object.assign(fresh(),r);return docHTML();}).join("");}
+  finally{S=keep;}
+  printLock=true;
+  document.title=title.replace(/[\\/:*?"<>|]+/g," ").trim();
+  window.print();
 }
 
 /* ---------------- EVENTS ---------------- */
@@ -698,7 +930,9 @@ function autoGrow(){document.querySelectorAll("textarea.ev").forEach(t=>{t.style
 document.addEventListener("click",e=>{
   const st=e.target.closest("[data-step]"); if(st){step=+st.dataset.step;renderAll();return;}
   const cl=e.target.closest("[data-clear]"); if(cl){const id=cl.dataset.clear;delete S.ans[id];delete S.ans[id+"_l"];persist();renderMain();renderNav();return;}
-  const ac=e.target.closest("[data-act]"); if(ac){if(ac.dataset.act==="save")saveRecord();if(ac.dataset.act==="print"){printDoc();window.print();}return;}
+  const ac=e.target.closest("[data-act]"); if(ac){if(ac.dataset.act==="save")saveRecord();if(ac.dataset.act==="send")submitRecord(ac);if(ac.dataset.act==="print"){printDoc();window.print();}return;}
+  const pd=e.target.closest("[data-pdf]"); if(pd){const v=dView[+pd.dataset.pdf];if(v)printRecords([v.r],"Asesmen RRI - "+v.r.ident.nama+" - "+(v.r.ident.noreg||v.r.ident.tgl_asesmen||""));return;}
+  const op=e.target.closest("[data-open]"); if(op){const v=dView[+op.dataset.open];if(v)openFromDash(v.r);return;}
   const ld=e.target.closest("[data-load]"); if(ld){const r=(store.get("rri_records")||[])[+ld.dataset.load];S=Object.assign(fresh(),JSON.parse(JSON.stringify(r)));persist();$("#modal").classList.remove("on");step=0;renderAll();toast("Dibuka: "+S.ident.nama);return;}
   const dl=e.target.closest("[data-del]"); if(dl){const recs=store.get("rri_records")||[];const r=recs[+dl.dataset.del];if(confirm("Hapus data asesmen "+r.ident.nama+"?")){recs.splice(+dl.dataset.del,1);store.set("rri_records",recs);if(S.uid===r.uid)S.uid=null;renderList();renderNav();}return;}
 });
@@ -720,14 +954,38 @@ document.addEventListener("input",e=>{
   if(t.dataset.ev){S.ev[t.dataset.ev]=t.value;t.style.height="auto";t.style.height=Math.max(40,t.scrollHeight+2)+"px";persist();}
   else if(t.dataset.id&&t.tagName==="INPUT"&&t.type==="text"){S.ident[t.dataset.id]=t.value;persist();if(t.dataset.id==="nama")renderNav();}
 });
-$("#bSave").onclick=saveRecord;
+$("#bSave").onclick=()=>saveRecord();
 $("#bPrint").onclick=()=>{printDoc();window.print();};
-window.addEventListener("beforeprint",printDoc);
-$("#bNew").onclick=()=>{if(confirm("Mulai formulir baru? Data yang belum disimpan ke Data Tersimpan akan hilang.")){const I=S.ident;S=fresh();["lokasi","tujuan","tempat","petugas","nip","tgl_asesmen"].forEach(k=>S.ident[k]=I[k]||S.ident[k]);persist();step=0;renderAll();}};
-$("#bList").onclick=()=>{renderList();$("#modal").classList.add("on");};
+window.addEventListener("beforeprint",()=>{if(!printLock)printDoc();});
+window.addEventListener("afterprint",()=>{printLock=false;document.title=baseTitle;});
+
+/* dashboard */
+$("#dLogo").src=LOGO;
+$("#bDash").onclick=openDash;
+$("#dCancel").onclick=closeLogin;
+window.addEventListener("popstate",()=>{
+  if(location.hash==="#dashboard"){if(DASH)showDash(true);else openDash();}
+  else{$("#mLogin").classList.remove("on");if(document.body.classList.contains("dash-on")){document.body.classList.remove("dash-on");renderAll();}}
+});
+$("#mLogin").addEventListener("click",e=>{if(e.target.id==="mLogin")closeLogin();});
+$("#fLogin").onsubmit=async e=>{
+  e.preventDefault();const pw=$("#dPw").value;
+  if(!pw){$("#dErr").textContent="Password belum diisi.";return;}
+  $("#dErr").textContent="";
+  try{await fetchDash(pw,$("#dGo"));showDash();}
+  catch(err){$("#dErr").textContent=err.message;$("#dPw").select();}
+};
+$("#dReload").onclick=async()=>{
+  try{await fetchDash(dashPw,$("#dReload"));renderDash();toast("Data diperbarui");}
+  catch(err){toast(err.message,3500);if(err.message==="Password salah.")exitDash();}
+};
+$("#dExit").onclick=exitDash;
+$("#dSearch").addEventListener("input",renderDash);
+$("#dCsv").onclick=()=>{if(dView.length)csvOf(dView.map(v=>v.r),"rekap_asesmen_rri_dashboard_"+today()+".csv",true);};
+$("#bNew").onclick=()=>{if(confirm("Mulai formulir baru? Isian yang sedang terbuka dan belum dikirim akan hilang.")){const I=S.ident;S=fresh();["lokasi","tujuan","tempat","petugas","nip","tgl_asesmen"].forEach(k=>S.ident[k]=I[k]||S.ident[k]);persist();step=0;renderAll();}};
 $("#bClose").onclick=()=>$("#modal").classList.remove("on");
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")$("#modal").classList.remove("on");});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#modal").classList.remove("on");});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("#modal").classList.remove("on");if($("#mLogin").classList.contains("on"))closeLogin();}});
 $("#bCsv").onclick=csv;
 $("#bJson").onclick=()=>{const recs=store.get("rri_records")||[];if(!recs.length){toast("Belum ada data untuk dicadangkan");return;}download("cadangan_asesmen_rri_"+today()+".json",JSON.stringify(recs,null,1),"application/json");};
 $("#fImport").onchange=e=>{
@@ -741,6 +999,7 @@ $("#fImport").onchange=e=>{
 };
 
 renderAll();
+if(location.hash==="#dashboard")openDash();
 })();
 </script>
 </body>
